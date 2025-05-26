@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html lang="he">
+<head>
+    <meta charset="UTF-8" http-equiv="Content-Security-Policy" content="script-src 'self';">
+    <title>השוואת פריטים</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            direction: rtl;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: right;
+        }
+
+        th {
+            background: #f0f0f0;
+        }
+
+        button {
+            margin: 10px 0;
+        }
+
+        a {
+            color: blue;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .copy-btn {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>השוואת פריטים שנבחרו</h1>
+    <table id="compareTable">
+        <thead>
+            <tr>
+                <th>שם הפריט</th>
+                <th>תיאור</th>
+                <th>שם הכותב</th>
+                <th>קישור לפרופיל</th>
+                <th>קישור לפוסט</th>
+                <th>טלפון</th>
+                <th>שם ליד הטלפון</th>
+                <th>מחיקה</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- פריטים יתווספו כאן דינמית -->
+        </tbody>
+    </table>
+
+    <button id="clearBtn">נקה את כל ההשוואות</button>
+    <button id="refreshBtn">רענן טבלה</button>
+
+    <script src="compare.js"></script>
+</body>
+</html>
