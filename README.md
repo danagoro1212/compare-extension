@@ -1,4 +1,4 @@
-# השוואת פוסטים (Facebook Posts Comparison Extension)
+# השוואת דירות וספקים בצורה נוחה
 
 תוסף כרום שמוסיף כפתורי "הוסף להשוואה" לפוסטים בפייסבוק, מאפשר לשמור פרטים חשובים מהפוסטים (כגון תיאור, שם הכותב, קישורים, טלפון, כתובת, מחיר ועוד), ולנהל רשימת פריטים להשוואה.
 
@@ -37,7 +37,7 @@
 
 
 
-# Facebook Posts Comparison Extension
+# Appartments / Suppliers Comparison Extension
 
 A Chrome extension that adds "Add to Compare" buttons to Facebook posts, enabling users to save important details from posts (such as description, author name, links, phone, address, price, and more) and manage a list of items for comparison.
 
