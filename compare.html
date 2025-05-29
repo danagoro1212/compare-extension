@@ -3,44 +3,8 @@
 <head>
     <meta charset="UTF-8" http-equiv="Content-Security-Policy" content="script-src 'self';">
     <title>השוואת פריטים</title>
+    <link rel="stylesheet" href="compare.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            direction: rtl;
-        }
-
-        table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: right;
-        }
-
-        th {
-            background: #f0f0f0;
-        }
-
-        button {
-            margin: 10px 0;
-        }
-
-        a {
-            color: blue;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        .copy-btn {
-            margin-right: 5px;
-        }
     </style>
 </head>
 <body>
@@ -48,13 +12,16 @@
     <table id="compareTable">
         <thead>
             <tr>
-                <th>שם הפריט</th>
+                <th>מספר</th>
                 <th>תיאור</th>
                 <th>שם הכותב</th>
                 <th>קישור לפרופיל</th>
                 <th>קישור לפוסט</th>
                 <th>טלפון</th>
                 <th>שם ליד הטלפון</th>
+                <th>כתובת</th>
+                <th>מחיר</th>
+                <th>וואטסאפ</th>
                 <th>מחיקה</th>
             </tr>
         </thead>
@@ -67,5 +34,6 @@
     <button id="refreshBtn">רענן טבלה</button>
 
     <script src="compare.js"></script>
+
 </body>
 </html>

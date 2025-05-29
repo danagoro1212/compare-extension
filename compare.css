@@ -1,0 +1,80 @@
+﻿body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    direction: rtl;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: right;
+}
+
+th {
+    background: #f0f0f0;
+}
+
+button {
+    margin: 10px 0;
+}
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    direction: rtl;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: right;
+}
+
+th {
+    background: #f0f0f0;
+    user-select: none; /* למנוע סימון טקסט בכותרת */
+}
+
+    th:hover {
+        background: #e0e0ff;
+    }
+
+button {
+    margin: 10px 0;
+}
+
+a {
+    color: blue;
+    text-decoration: none;
+}
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+.copy-btn {
+    margin-right: 5px;
+}
+
+
+a {
+    color: blue;
+    text-decoration: none;
+}
+
+    a:hover {
+        text-decoration: underline;
+    }
+
+.copy-btn {
+    margin-right: 5px;
+}

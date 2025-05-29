@@ -1,47 +1,88 @@
-function addCompareButtons() {
-    const posts = document.querySelectorAll('div.userContentWrapper');
+ï»¿// Toast notification utility
+function showToast(message) {
+    let toast = document.getElementById('compare-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'compare-toast';
+        toast.style.position = 'fixed';
+        toast.style.bottom = '30px';
+        toast.style.left = '50%';
+        toast.style.transform = 'translateX(-50%)';
+        toast.style.background = '#1877F2';
+        toast.style.color = 'white';
+        toast.style.padding = '10px 20px';
+        toast.style.borderRadius = '6px';
+        toast.style.zIndex = 9999;
+        toast.style.fontSize = '16px';
+        toast.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2000);
+}
 
-    posts.forEach(post => {
-        if (post.querySelector('.compare-btn')) return;
+function createCompareButton() {
+    const btn = document.createElement('button');
+    btn.textContent = '×”×•×¡×£ ×œ×”×©×•×•××”';
+    btn.className = 'compare-btn';
+    btn.style.marginTop = '5px';
+    btn.style.padding = '5px 10px';
+    btn.style.backgroundColor = '#1877F2';
+    btn.style.color = 'white';
+    btn.style.border = 'none';
+    btn.style.borderRadius = '4px';
+    btn.style.cursor = 'pointer';
+    return btn;
+}
 
-        const btn = document.createElement('button');
-        btn.textContent = 'äåñó ìäùååàä';
-        btn.className = 'compare-btn';
-        btn.style.marginTop = '5px';
-        btn.style.padding = '5px 10px';
-        btn.style.backgroundColor = '#1877F2';
-        btn.style.color = 'white';
-        btn.style.border = 'none';
-        btn.style.borderRadius = '4px';
-        btn.style.cursor = 'pointer';
+function handleCompareClick(post) {
+    const name = post.querySelector('h5, span')?.innerText || '×¤×•×¡×˜ ×œ×œ× ×›×•×ª×¨×ª';
+    const description = post.querySelector('div[data-ad-preview]')?.innerText || '';
+    const source = window.location.href;
 
-        post.appendChild(btn);
+    const item = { name, description, source };
 
-        btn.addEventListener('click', () => {
-            const name = post.querySelector('h5, span')?.innerText || 'ôåñè ììà ëåúøú';
-            const description = post.querySelector('div[data-ad-preview]')?.innerText || '';
-            const source = window.location.href;
-
-            const item = { name, description, source };
-
-            // ùìéôú äðúåðéí îÎchrome.storage.local
-            chrome.storage.local.get({ compareItems: [] }, (result) => {
-                const items = result.compareItems;
-
-                // áãé÷ä àí äôøéè ëáø ÷ééí
-                const exists = items.some(i => i.name === item.name && i.source === item.source);
-                if (!exists) {
-                    items.push(item);
-                    chrome.storage.local.set({ compareItems: items }, () => {
-                        alert('äôøéè ðåñó ìäùååàä!');
-                    });
+    chrome.storage.local.get({ compareItems: [] }, (result) => {
+        if (chrome.runtime.lastError) {
+            showToast('×©×’×™××” ×‘×’×™×©×” ×œ××—×¡×•×Ÿ');
+            return;
+        }
+        const items = result.compareItems;
+        const exists = items.some(i => i.name === item.name && i.source === item.source);
+        if (!exists) {
+            items.push(item);
+            chrome.storage.local.set({ compareItems: items }, () => {
+                if (chrome.runtime.lastError) {
+                    showToast('×©×’×™××” ×‘×©×ž×™×¨×ª ×¤×¨×™×˜');
                 } else {
-                    alert('äôøéè ëáø ðîöà áäùååàä');
+                    showToast('×”×¤×¨×™×˜ × ×•×¡×£ ×œ×”×©×•×•××”!');
                 }
             });
-        });
+        } else {
+            showToast('×”×¤×¨×™×˜ ×›×‘×¨ × ×ž×¦× ×‘×”×©×•×•××”');
+        }
     });
 }
 
-// äåñôä îçåãùú ùì ëôúåøéí ìôåñèéí çãùéí
-setInterval(addCompareButtons, 3000);
+function addCompareButtonsToPosts(posts) {
+    posts.forEach(post => {
+        if (post.querySelector('.compare-btn')) return;
+        const btn = createCompareButton();
+        btn.addEventListener('click', () => handleCompareClick(post));
+        post.appendChild(btn);
+    });
+}
+
+function observePosts() {
+    const observer = new MutationObserver(() => {
+        const posts = document.querySelectorAll('div.userContentWrapper');
+        addCompareButtonsToPosts(posts);
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    // Initial run for already loaded posts
+    const posts = document.querySelectorAll('div.userContentWrapper');
+    addCompareButtonsToPosts(posts);
+}
+
+observePosts();
