@@ -1,39 +1,56 @@
 ﻿<!DOCTYPE html>
-<html lang="he">
+<html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8" http-equiv="Content-Security-Policy" content="script-src 'self';">
-    <title>השוואת פריטים</title>
-    <link rel="stylesheet" href="compare.css">
-    <style>
-    </style>
+  <meta charset="UTF-8">
+  <title>השוואת פריטים</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="bootstrap.min.css">
+  <link rel="stylesheet" href="compare.css">
 </head>
-<body>
-    <h1>השוואת פריטים שנבחרו</h1>
-    <table id="compareTable">
-        <thead>
-            <tr>
-                <th>מספר</th>
-                <th>תיאור</th>
-                <th>שם הכותב</th>
-                <th>קישור לפרופיל</th>
-                <th>קישור לפוסט</th>
-                <th>טלפון</th>
-                <th>שם ליד הטלפון</th>
-                <th>כתובת</th>
-                <th>מחיר</th>
-                <th>וואטסאפ</th>
-                <th>מחיקה</th>
-            </tr>
+<body class="p-3">
+  <div class="container-fluid">
+    <div class="text-center mb-4">
+      <h2>✨ השוואת פריטים מדויקת ונוחה</h2>
+      <p class="text-muted">מיין, חפש, ערוך והשווה בין פריטים שנשמרו מהפייסבוק</p>
+    </div>
+
+    <div class="d-flex flex-md-row flex-column align-items-md-center mb-3 action-bar">
+      <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="חיפוש חופשי...">
+      <div class="btn-group" role="group">
+        <button class="btn btn-sm btn-outline-danger" id="clearBtn">🗑️ נקה הכל</button>
+        <button class="btn btn-sm btn-outline-secondary" id="refreshBtn">🔄 רענן</button>
+        <button class="btn btn-sm btn-outline-success" id="exportBtn">📊 ייצוא ל-Excel</button>
+      </div>
+    </div>
+
+    <div class="table-responsive">
+      <table id="compareTable" class="table table-bordered table-hover table-striped align-middle bg-white">
+        <thead class="table-primary">
+          <tr>
+            <th class="sortable">#</th>
+            <th class="sortable">תיאור</th>
+            <th class="sortable">שם הכותב</th>
+            <th>קישור לפרופיל</th>
+            <th>קישור לפוסט</th>
+            <th class="sortable">טלפון</th>
+            <th class="sortable">שם ליד הטלפון</th>
+            <th class="sortable">כתובת</th>
+            <th class="sortable">מחיר</th>
+            <th>וואטסאפ</th>
+            <th class="sortable">נוסף בתאריך</th>
+            <th>הערות</th>
+            <th>מחיקה</th>
+          </tr>
         </thead>
         <tbody>
-            <!-- פריטים יתווספו כאן דינמית -->
+          <!-- פריטים יתווספו כאן דינמית -->
         </tbody>
-    </table>
+      </table>
+    </div>
+  </div>
 
-    <button id="clearBtn">נקה את כל ההשוואות</button>
-    <button id="refreshBtn">רענן טבלה</button>
-
-    <script src="compare.js"></script>
-
+  <script src="bootstrap.bundle.min.js"></script>
+  <script src="compare.js"></script>
+  <script src="xlsx.full.min.js"></script>
 </body>
 </html>

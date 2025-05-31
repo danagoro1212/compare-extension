@@ -1,236 +1,174 @@
-﻿document.addEventListener('DOMContentLoaded', () => {
-    const tableBody = document.querySelector('#compareTable tbody');
-    const clearBtn = document.getElementById('clearBtn');
-    const refreshBtn = document.getElementById('refreshBtn');
-    const tableHeaders = document.querySelectorAll('#compareTable thead th');
+﻿// compare.js - כולל וואטסאפ תקני, מיון, חיפוש, שמירת הערות וייצוא ל-Excel
 
-    let items = [];
-    let filterText = '';
-    let sortColumn = null;
-    let sortDirection = 'asc';
+document.addEventListener("DOMContentLoaded", () => {
+    const tableBody = document.querySelector("#compareTable tbody");
+    const clearBtn = document.getElementById("clearBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const searchInput = document.getElementById("searchInput");
+    const exportBtn = document.getElementById("exportBtn");
+    exportBtn.addEventListener("click", exportToExcel);
 
-    // יצירת שדה חיפוש אחד בלבד מעל הטבלה
-    const filterInput = document.createElement('input');
-    filterInput.type = 'search';
-    filterInput.placeholder = 'חפש בתיאור או שם...';
-    filterInput.style.marginBottom = '10px';
-    filterInput.style.width = '100%';
-    filterInput.style.padding = '6px';
-    document.querySelector('body').insertBefore(filterInput, document.querySelector('#compareTable'));
+    const headers = document.querySelectorAll("#compareTable thead th");
+    let allItems = [];
+    let currentSort = { key: null, direction: 1 };
 
-    filterInput.addEventListener('input', (e) => {
-        filterText = e.target.value.trim();
-        applyFilterAndSort();
-    });
+    const keyMap = ["index", "description", "authorName", null, null, "phone", "phoneName", "address", "price", null, "addedAt", null, null];
 
-    // הגדרת מיון בכותרות הטבלה
-    tableHeaders.forEach((th, index) => {
-        if (index < 9) { // להתאים לעמודות הרלוונטיות
-            th.style.cursor = 'pointer';
-            th.addEventListener('click', () => {
-                if (sortColumn === index) {
-                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+    headers.forEach((th, index) => {
+        const key = keyMap[index];
+        if (key) {
+            th.classList.add("sortable");
+            th.addEventListener("click", () => {
+                if (currentSort.key === key) {
+                    currentSort.direction *= -1;
                 } else {
-                    sortColumn = index;
-                    sortDirection = 'asc';
+                    currentSort = { key, direction: 1 };
                 }
+                renderTable(filterItems(searchInput.value));
                 updateSortIndicators();
-                applyFilterAndSort();
             });
         }
     });
 
     function updateSortIndicators() {
-        tableHeaders.forEach((th, idx) => {
-            th.textContent = th.textContent.replace(/ ▲| ▼/g, '');
-            if (idx === sortColumn) {
-                th.textContent += sortDirection === 'asc' ? ' ▲' : ' ▼';
-                th.style.backgroundColor = '#d0d0ff';
-            } else {
-                th.style.backgroundColor = '#f0f0f0';
+        headers.forEach((th, i) => {
+            th.innerHTML = th.textContent.replace(/\s*[▲▼]$/, "");
+            if (keyMap[i] === currentSort.key) {
+                const arrow = currentSort.direction === 1 ? "▲" : "▼";
+                th.innerHTML += ` <span class="sort-arrow">${arrow}</span>`;
             }
         });
     }
 
-    function applyFilterAndSort() {
-        let filtered = items;
+    function getWhatsappLink(phone, message = '') {
+        if (!phone || !/^0[5]\d{8}$/.test(phone)) return '';
+        const intl = phone.startsWith('0') ? '972' + phone.slice(1) : phone;
+        const encodedMessage = encodeURIComponent(message || 'שלום, ראיתי את הפוסט שלך בפייסבוק. האם זה עדיין רלוונטי?');
+        return `https://wa.me/${intl}?text=${encodedMessage}`;
+    }
 
-        if (filterText) {
-            const lowerFilter = filterText.toLowerCase();
-            filtered = filtered.filter(item =>
-                (item.description && item.description.toLowerCase().includes(lowerFilter)) ||
-                (item.authorName && item.authorName.toLowerCase().includes(lowerFilter))
-            );
-        }
+    function renderTable(items) {
+        if (currentSort.key) {
+            items.sort((a, b) => {
+                const valA = a[currentSort.key] || "";
+                const valB = b[currentSort.key] || "";
 
-        if (sortColumn !== null) {
-            filtered.sort((a, b) => {
-                let valA, valB;
-                switch (sortColumn) {
-                    case 0:
-                        valA = items.indexOf(a);
-                        valB = items.indexOf(b);
-                        break;
-                    case 1:
-                        valA = a.description || '';
-                        valB = b.description || '';
-                        break;
-                    case 2:
-                        valA = a.authorName || '';
-                        valB = b.authorName || '';
-                        break;
-                    case 7:
-                        valA = a.address || '';
-                        valB = b.address || '';
-                        break;
-                    case 8:
-                        valA = parseFloat((a.price || '').toString().replace(/[^0-9.\-]/g, '')) || 0;
-                        valB = parseFloat((b.price || '').toString().replace(/[^0-9.\-]/g, '')) || 0;
-                        break;
-                    default:
-                        valA = '';
-                        valB = '';
+                if (currentSort.key === "price") {
+                    return (parseFloat(valA || 0) - parseFloat(valB || 0)) * currentSort.direction;
                 }
 
-                if (typeof valA === 'number' && typeof valB === 'number') {
-                    return sortDirection === 'asc' ? valA - valB : valB - valA;
-                } else {
-                    valA = valA.toString().toLowerCase();
-                    valB = valB.toString().toLowerCase();
-                    if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-                    if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-                    return 0;
+                if (currentSort.key === "addedAt") {
+                    return (new Date(valA) - new Date(valB)) * currentSort.direction;
                 }
+
+                return valA.toString().localeCompare(valB.toString(), 'he') * currentSort.direction;
             });
         }
 
-        renderTable(filtered);
+        tableBody.innerHTML = "";
+        items.forEach((item, index) => {
+            const addedDate = item.addedAt ? new Date(item.addedAt).toLocaleString("he-IL") : "";
+            const whatsappLink = getWhatsappLink(item.phone);
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${index + 1}</td>
+                <td>${item.description}</td>
+                <td>${item.authorName}</td>
+                <td><a href="${item.authorProfile}" target="_blank">פרופיל</a></td>
+                <td><a href="${item.postLink}" target="_blank">פוסט</a></td>
+                <td>${item.phone}</td>
+                <td>${item.phoneName}</td>
+                <td>${item.address || ''}</td>
+                <td>${item.price || ''}</td>
+                <td>${whatsappLink ? `<a href="${whatsappLink}" target="_blank">שלח וואטסאפ</a>` : ''}</td>
+                <td>${addedDate}</td>
+                <td><textarea class="notes-area" data-index="${index}">${item.notes || ''}</textarea></td>
+                <td><button class="deleteBtn" data-index="${index}">X</button></td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        document.querySelectorAll(".deleteBtn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                const index = +e.target.dataset.index;
+                allItems.splice(index, 1);
+                chrome.storage.local.set({ compareItems: allItems }, () => renderTable(filterItems(searchInput.value)));
+            });
+        });
+
+        document.querySelectorAll(".notes-area").forEach(area => {
+            area.addEventListener("change", (e) => {
+                const index = +e.target.dataset.index;
+                const newNote = e.target.value;
+                if (allItems[index]) {
+                    allItems[index].notes = newNote;
+                    chrome.storage.local.set({ compareItems: allItems });
+                    e.target.closest("tr").classList.add("table-warning");
+                    setTimeout(() => e.target.closest("tr").classList.remove("table-warning"), 800);
+                }
+            });
+        });
     }
 
-    function renderTable(itemsToRender) {
-        tableBody.innerHTML = '';
+    function filterItems(query) {
+        const q = query.toLowerCase();
+        return allItems.filter(item =>
+            Object.values(item).some(val =>
+                typeof val === "string" && val.toLowerCase().includes(q)
+            )
+        );
+    }
 
-        if (itemsToRender.length === 0) {
-            const emptyRow = document.createElement('tr');
-            const emptyCell = document.createElement('td');
-            emptyCell.colSpan = 11;
-            emptyCell.textContent = 'אין פריטים להשוואה';
-            emptyRow.appendChild(emptyCell);
-            tableBody.appendChild(emptyRow);
+    function refreshCompareTable() {
+        chrome.storage.local.get({ compareItems: [] }, (result) => {
+            allItems = result.compareItems;
+            renderTable(filterItems(searchInput.value));
+            updateSortIndicators();
+        });
+    }
+
+    function clearCompareItems() {
+        if (confirm("האם אתה בטוח שברצונך למחוק את כל הפריטים?")) {
+            chrome.storage.local.set({ compareItems: [] }, () => {
+                allItems = [];
+                renderTable([]);
+            });
+        }
+    }
+
+    clearBtn.addEventListener("click", clearCompareItems);
+    refreshBtn.addEventListener("click", refreshCompareTable);
+    searchInput.addEventListener("input", () => renderTable(filterItems(searchInput.value)));
+
+    refreshCompareTable();
+});
+
+window.exportToExcel = function () {
+    chrome.storage.local.get({ compareItems: [] }, (result) => {
+        const items = result.compareItems;
+        if (items.length === 0) {
+            alert("אין פריטים לייצוא.");
             return;
         }
 
-        itemsToRender.forEach((item, index) => {
-            const row = document.createElement('tr');
+        const data = items.map((item, index) => ({
+            מספר: index + 1,
+            תיאור: item.description || '',
+            "שם הכותב": item.authorName || '',
+            "קישור לפרופיל": item.authorProfile || '',
+            "קישור לפוסט": item.postLink || '',
+            טלפון: item.phone || '',
+            "שם ליד הטלפון": item.phoneName || '',
+            כתובת: item.address || '',
+            מחיר: item.price || '',
+            וואטסאפ: item.phone ? getWhatsappLink(item.phone) : '',
+            "תאריך הוספה": item.addedAt ? new Date(item.addedAt).toLocaleString("he-IL") : '',
+            הערות: item.notes || ''
+        }));
 
-            row.appendChild(createCell((index + 1).toString()));
-            row.appendChild(createCell(item.description || ''));
-            row.appendChild(createCell(item.authorName || ''));
-
-            if (item.authorProfile) {
-                const profileLink = document.createElement('a');
-                profileLink.href = item.authorProfile;
-                profileLink.target = '_blank';
-                profileLink.rel = 'noopener noreferrer';
-                profileLink.textContent = 'קישור לפרופיל';
-                row.appendChild(createCell(profileLink, true));
-            } else {
-                row.appendChild(createCell('-'));
-            }
-
-            if (item.postLink) {
-                const postLink = document.createElement('a');
-                postLink.href = item.postLink;
-                postLink.target = '_blank';
-                postLink.rel = 'noopener noreferrer';
-                postLink.textContent = 'קישור לפוסט';
-                row.appendChild(createCell(postLink, true));
-            } else {
-                row.appendChild(createCell('-'));
-            }
-
-            row.appendChild(createCell(item.phone || ''));
-            row.appendChild(createCell(item.phoneName || ''));
-            row.appendChild(createCell(item.address || ''));
-            row.appendChild(createCell(item.price || ''));
-
-            const whatsappCell = document.createElement('td');
-            if (item.phone) {
-                let phoneDigits = item.phone.replace(/\D/g, '');
-                if (phoneDigits.startsWith('0')) {
-                    phoneDigits = '972' + phoneDigits.slice(1);
-                }
-                const greetingName = item.phoneName ? item.phoneName.trim() : '';
-                const message = greetingName
-                    ? `היי ${greetingName},\nראיתי שפירסמת בנוגע לדירה אשמח לשמוע עוד פרטים תודה.`
-                    : `היי, ראיתי שפירסמת בנוגע לדירה אשמח לשמוע עוד פרטים תודה.`;
-                const encodedMessage = encodeURIComponent(message);
-                const waLink = document.createElement('a');
-                waLink.href = `https://wa.me/${phoneDigits}?text=${encodedMessage}`;
-                waLink.target = '_blank';
-                waLink.rel = 'noopener noreferrer';
-                waLink.textContent = 'שלח וואטסאפ';
-                whatsappCell.appendChild(waLink);
-            } else {
-                whatsappCell.textContent = '-';
-            }
-            row.appendChild(whatsappCell);
-
-            const deleteCell = document.createElement('td');
-            const deleteBtn = document.createElement('button');
-            deleteBtn.classList.add('delete-btn');
-            deleteBtn.textContent = 'מחק';
-            deleteBtn.dataset.index = items.indexOf(item);
-            deleteCell.appendChild(deleteBtn);
-            row.appendChild(deleteCell);
-
-            tableBody.appendChild(row);
-        });
-    }
-
-    function createCell(content, isHTML = false) {
-        const td = document.createElement('td');
-        if (isHTML && content instanceof HTMLElement) {
-            td.appendChild(content);
-        } else {
-            td.textContent = content;
-        }
-        return td;
-    }
-
-    tableBody.addEventListener('click', (e) => {
-        if (e.target.classList.contains('delete-btn')) {
-            const index = parseInt(e.target.dataset.index);
-            deleteItem(index);
-        }
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "השוואה");
+        XLSX.writeFile(wb, "compare_items.xlsx");
     });
-
-    function deleteItem(index) {
-        chrome.storage.local.get({ compareItems: [] }, (result) => {
-            const itemsFromStorage = result.compareItems;
-            itemsFromStorage.splice(index, 1);
-            chrome.storage.local.set({ compareItems: itemsFromStorage }, () => {
-                loadItems();
-            });
-        });
-    }
-
-    clearBtn.addEventListener('click', () => {
-        if (confirm('למחוק את כל הפריטים?')) {
-            chrome.storage.local.set({ compareItems: [] }, () => {
-                loadItems();
-            });
-        }
-    });
-
-    refreshBtn.addEventListener('click', loadItems);
-
-    function loadItems() {
-        chrome.storage.local.get({ compareItems: [] }, (result) => {
-            items = result.compareItems;
-            applyFilterAndSort();
-        });
-    }
-
-    loadItems();
-});
+};

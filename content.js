@@ -1,4 +1,6 @@
-﻿function initCompareExtension() {
+﻿// compare-extension.js - גרסה עם זיהוי שם כותב מדויק, קישור למסנג'ר, וקישור וואטסאפ רק אם יש טלפון
+
+function initCompareExtension() {
     const observer = new MutationObserver(() => {
         addCompareButtons();
     });
@@ -34,7 +36,6 @@
             iconBtn.addEventListener('mouseenter', () => iconBtn.style.opacity = '1');
             iconBtn.addEventListener('mouseleave', () => iconBtn.style.opacity = '0.75');
 
-            // מיקום הכפתור אחרי כפתור התפריט אם קיים, אחרת בתחילת הפוסט
             const menuButton = post.querySelector('[aria-label][role="button"]');
             if (menuButton && menuButton.parentElement) {
                 menuButton.parentElement.insertBefore(iconBtn, menuButton.nextSibling);
@@ -74,15 +75,13 @@
     }
 
     function extractPhoneAndName(text) {
-        // מחפש טלפון ישראלי עם קידומת +972 או 0, ונותן שם קודם לפני הטלפון אם קיים
-        const phoneRegex = /([\u0590-\u05FF\s\-]{0,20})?(\+972|0)5[\s\-]?\d{1}[\s\-]?\d{6,7}/g;
+        const phoneRegex = /([\u0590-\u05FF\s\-]{0,20})?((?:\+972\-?|\b0)5[0-9\- ]{7,10})/g;
         let match;
         const results = [];
 
         while ((match = phoneRegex.exec(text)) !== null) {
             let namePart = match[1] ? match[1].trim() : '';
-            let phonePart = match[2] + text.substr(match.index + match[0].indexOf(match[2]) + match[2].length, 8);
-            // ניקוי מילים לא רצויות מהשם
+            let phonePart = match[2];
             namePart = namePart.replace(/(לפרטים|בפרטי|לוואצאפ|למספר|טלפון|פלאפון|מספר|מייל|סמס|:|,)/g, '').trim();
             phonePart = normalizePhone(phonePart);
             results.push({ phone: phonePart, name: namePart });
@@ -91,21 +90,18 @@
     }
 
     function extractDetails(text) {
-        // מחפש כתובת - שילוב רחוב ומספר (אפשר לשפר בהתאם)
-        const addressMatch = text.match(/(?:ברח[ו'"]?\s*|ברחוב\s*|ב)?([א-ת"׳'\- ]+\d{1,4}(?:\s*פינת\s*[א-ת"׳'\- ]+)?|[א-ת"׳'\- ]+\d{1,4})/);
-        const address = addressMatch ? addressMatch[1].trim() : null;
+        const addressRegex = /(?:ב(?:רחוב)?\s*)?([א-ת"׳'\- ]{2,30})\s*(\d{1,4})/;
+        const addressMatch = text.match(addressRegex);
+        const address = addressMatch ? `${addressMatch[1].trim()} ${addressMatch[2]}` : null;
 
-        // מחפש מחיר בשקלים
-        const priceMatch = text.match(/(?:שכ(?:\"|״)?ד|שכירות|מחיר|עלות)?[-\s:]*([\d,\.]{3,7})\s*(?:₪|ש["']?ח|שח)?/i);
+        const priceMatch = text.match(/(?:שכ(?:\"|״)?ד|שכירות|מחיר|עלות)?[-\s:]*([\d]{3,6})(?:\s*₪|ש["']?ח|שח)?/i);
         let price = priceMatch && priceMatch[1] ? priceMatch[1].replace(/,/g, '').replace(/\.00$/, '') : null;
 
-        // מספר חדרים - תמיכה גם ב"חדר אחד"
         const roomsMatch = text.match(/(\d+)\s*חדר(?:ים)?|חדר\s*אחד/);
         const rooms = roomsMatch ? (roomsMatch[1] || "1") : null;
 
-        // תאריך כניסה
         let entryDate = null;
-        const entryMatch = text.match(/כניסה[:\s\-]*([0-9]{1,2}[\.\/][0-9]{1,2})/);
+        const entryMatch = text.match(/כניסה[:\s\-]*([0-9]{1,2}[\.\/]?[0-9]{1,2})/);
         if (entryMatch) {
             entryDate = entryMatch[1];
         } else if (/(פנוי(?:ה)?|זמין(?:ה)?)\s*מיידי(?:ת)?/i.test(text)) {
@@ -115,19 +111,40 @@
         return { address, rooms, entryDate, price };
     }
 
+    function extractMessengerId(url) {
+        const idMatch = url.match(/profile\.php\?id=(\d{8,20})/);
+        if (idMatch) return idMatch[1];
+
+        const groupUserMatch = url.match(/groups\/\d+\/user\/(\d{8,20})/);
+        if (groupUserMatch) return groupUserMatch[1];
+
+        const usernameMatch = url.match(/facebook\.com\/([a-zA-Z0-9.\-]+)(?:[\/?]|$)/);
+        if (usernameMatch && !usernameMatch[1].startsWith('profile.php')) return usernameMatch[1];
+
+        return null;
+    }
+
     function savePostData(post) {
-        // שם הפוסט - לוקח רק h5 או strong בכותרות
         const name = post.querySelector('h5, strong')?.innerText || 'פוסט ללא כותרת';
         const description = post.querySelector('[data-ad-comet-preview="message"]')?.innerText || '';
 
-        let authorProfile = window.location.href;
         let authorName = 'לא ידוע';
+        let authorProfile = window.location.href;
 
-        const profileLink = post.querySelector('a[href*="facebook.com"]:not([href*="/posts/"]):not([href*="/photos/"]):not([href*="/permalink/"])');
-        if (profileLink && profileLink.href) {
+        const nameHeader = post.querySelector('h3');
+        const nameSpan = nameHeader?.querySelector('span span');
+        const profileLink = nameHeader?.querySelector('a[href*="facebook.com"]');
+
+        if (profileLink?.href) {
             authorProfile = profileLink.href;
-            authorName = profileLink.innerText?.trim() || authorName;
         }
+
+        if (nameSpan?.textContent) {
+            authorName = nameSpan.textContent.trim();
+        }
+
+        const messengerId = extractMessengerId(authorProfile);
+        const messengerLink = messengerId ? `https://m.me/${messengerId}` : authorProfile;
 
         let postLink = '';
         const linkToPost = post.querySelector('a[href*="/posts/"], a[href*="/permalink/"], a[href*="/photos/"]');
@@ -135,7 +152,6 @@
             postLink = linkToPost.href;
         }
 
-        // חילוץ טלפונים ושמות
         const phonesAndNames = extractPhoneAndName(description);
         let phone = '';
         let phoneName = '';
@@ -144,24 +160,23 @@
             phoneName = phonesAndNames[0].name;
         }
 
-        // חילוץ פרטים נוספים
         const details = extractDetails(description);
 
         const newItem = {
             name,
             description,
             authorName,
-            authorProfile,
+            authorProfile: messengerLink,
             postLink,
             phone,
             phoneName,
             ...details,
+            notes: '',
             addedAt: new Date().toISOString()
         };
 
         chrome.storage.local.get({ compareItems: [] }, (result) => {
             const items = result.compareItems;
-            // השוואה נירמלת לטלפונים
             const exists = items.some(i =>
                 i.name === newItem.name &&
                 i.postLink === newItem.postLink &&
@@ -179,7 +194,6 @@
         });
     }
 
-    // פונקציית Toast קטנה לאינפורמציה לא פולשנית
     function showToast(message) {
         const toast = document.createElement('div');
         toast.innerText = message;
@@ -197,42 +211,13 @@
             fontWeight: 'bold',
             fontFamily: 'Arial, sans-serif',
             userSelect: 'none',
-            pointerEvents: 'none',
+            pointerEvents: 'none'
         });
         document.body.appendChild(toast);
         setTimeout(() => {
             toast.remove();
         }, 3000);
     }
-
-    // פונקציית ייצוא ל-CSV (Excel)
-    window.exportToExcel = function () {
-        chrome.storage.local.get({ compareItems: [] }, (result) => {
-            const items = result.compareItems;
-            if (items.length === 0) {
-                showToast("אין פריטים לייצוא.");
-                return;
-            }
-
-            const headers = Object.keys(items[0]);
-            const rows = items.map(item => headers.map(h => item[h] ?? ''));
-
-            let csvContent = 'data:text/csv;charset=utf-8,';
-            csvContent += headers.join(',') + '\n';
-            rows.forEach(row => {
-                csvContent += row.map(cell => `"${cell.toString().replace(/"/g, '""')}"`).join(',') + '\n';
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement('a');
-            link.setAttribute('href', encodedUri);
-            link.setAttribute('download', 'compare_items.csv');
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        });
-    };
 }
 
-// אתחול מיד
 initCompareExtension();

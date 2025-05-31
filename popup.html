@@ -1,32 +1,21 @@
 ﻿<!DOCTYPE html>
 <html lang="he" dir="rtl">
 <head>
-    <meta charset="UTF-8" http-equiv="Content-Security-Policy" content="script-src 'self';" >
-    <style>
-        body {
-            min-width: 200px;
-            padding: 10px;
-            font-family: sans-serif;
-        }
-
-        button {
-            width: 100%;
-            padding: 10px;
-            font-size: 14px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-            button:hover {
-                background-color: #45a049;
-            }
-    </style>
+  <meta charset="UTF-8">
+  <title>השוואת פריטים</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-    <button id="openCompare">פתח השוואה</button>
-    <script src="popup.js"> </script>
+  <div class="popup-container">
+    <h2>📋 רשימת השוואה</h2>
+    <p id="itemCount">טוען...</p>
+    <div class="actions">
+      <button id="openCompare">פתח טבלה</button>
+      <button id="clearAll">נקה הכל</button>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
 </body>
 </html>
