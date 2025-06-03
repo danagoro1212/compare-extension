@@ -72,7 +72,6 @@ document.addEventListener("DOMContentLoaded", () => {
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${index + 1}</td>
-                <td>${item.description}</td>
                 <td>${item.authorName}</td>
                 <td><a href="${item.authorProfile}" target="_blank">פרופיל</a></td>
                 <td><a href="${item.postLink}" target="_blank">פוסט</a></td>
@@ -153,7 +152,6 @@ window.exportToExcel = function () {
 
         const data = items.map((item, index) => ({
             מספר: index + 1,
-            תיאור: item.description || '',
             "שם הכותב": item.authorName || '',
             "קישור לפרופיל": item.authorProfile || '',
             "קישור לפוסט": item.postLink || '',

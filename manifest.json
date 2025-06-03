@@ -4,7 +4,7 @@
     "version": "1.0",
     "description": "תוסף שמוסיף כפתורי השוואה לפוסטים בפייסבוק",
     "permissions": [ "storage", "scripting", "activeTab" ],
-    "host_permissions": [ "<all_urls>" ],
+    "host_permissions": [ "<all_urls>" ,"http://localhost:5005/"],
     "action": {
         "default_popup": "popup.html",
         "default_icon": {
